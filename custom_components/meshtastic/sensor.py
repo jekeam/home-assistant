@@ -563,21 +563,32 @@ def _build_environment_metrics_sensors(
         return lambda device: device.coordinator.data[device.node_id].get("environmentMetrics", {}).get(key, None)
 
     def add_sensor_base(  # noqa: PLR0913
-        node_id: int,
-        node_info: dict[str, Any],
-        value_key: str,
-        device_class: SensorDeviceClass | None,
-        unit_of_measurement: str | None = None,
-        state_class: SensorStateClass = SensorStateClass.MEASUREMENT,
+            node_id: int,
+            node_info: dict[str, Any],
+            value_key: str,
+            device_class: SensorDeviceClass | None,
+            unit_of_measurement: str | None = None,
+            state_class: SensorStateClass = SensorStateClass.MEASUREMENT,
     ) -> None:
+        name = None
+        icon = None
         key = "".join(["_" + c.lower() if c.isupper() else c for c in value_key]).lstrip("_")
+        key = "environment_" + key
+
         if value_key in node_info["environmentMetrics"]:
+            if value_key == "radiation":
+                name = "Radiation"
+                icon = "mdi:radioactive"
+                unit_of_measurement = "µR/h"
+
             entities.append(
                 MeshtasticSensor(
                     coordinator=coordinator,
                     entity_description=MeshtasticSensorEntityDescription(
-                        key="environment_" + key,
-                        translation_key="environment_" + key,
+                        key=key,
+                        icon=icon,
+                        name=name,
+                        translation_key=key,
                         native_unit_of_measurement=unit_of_measurement,
                         device_class=device_class,
                         state_class=state_class,
@@ -597,6 +608,7 @@ def _build_environment_metrics_sensors(
             add_sensor("barometricPressure", SensorDeviceClass.ATMOSPHERIC_PRESSURE, UnitOfPressure.HPA)
             add_sensor("gasResistance", None, UnitOfPressure.HPA)
             add_sensor("iaq", SensorDeviceClass.AQI, None)
+            add_sensor("radiation", None, "µR/h")
 
             add_sensor("distance", SensorDeviceClass.DISTANCE, UnitOfLength.MILLIMETERS)
 
